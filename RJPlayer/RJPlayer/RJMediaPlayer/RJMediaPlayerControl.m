@@ -220,6 +220,9 @@ typedef enum : NSInteger {
     
     backBtn = [UIButton buttonWithType:UIButtonTypeCustom];
     backBtn.frame = CGRectMake(20, 2, 40, 40);
+    backBtn.layer.cornerRadius = 20.0f;
+    backBtn.clipsToBounds = YES;
+    backBtn.backgroundColor = [[UIColor blackColor] colorWithAlphaComponent:0.7];
     [backBtn setImage:[UIImage imageNamed:@"back_white"] forState:UIControlStateNormal];
     [backBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [backBtn addTarget:self action:@selector(back:) forControlEvents:UIControlEventTouchUpInside];
