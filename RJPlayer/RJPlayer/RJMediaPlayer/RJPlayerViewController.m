@@ -25,23 +25,10 @@
 @end
 
 @implementation RJPlayerViewController
-- (UIStatusBarStyle)preferredStatusBarStyle{
-    return 1;
-}
-
-- (instancetype)initWithURL:(NSURL *)url {
+- (instancetype)initWithURL:(NSString *)url {
     self = [super init];
     if (self) {
         self.url = url;
-    }
-    return self;
-}
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
-{
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
-    if (self) {
-        // Custom initialization
     }
     return self;
 }
@@ -58,16 +45,16 @@
         CGFloat height = frame.size.width;
         frame = CGRectMake(0, 0, width, height);
     }
-#ifdef DEBUG
-    [IJKFFMoviePlayerController setLogReport:YES];
-    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
-#else
+//#ifdef DEBUG
+//    [IJKFFMoviePlayerController setLogReport:YES];
+//    [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_DEBUG];
+//#else
     [IJKFFMoviePlayerController setLogReport:NO];
     [IJKFFMoviePlayerController setLogLevel:k_IJK_LOG_INFO];
-#endif
+//#endif
+    
     IJKFFOptions *options = [IJKFFOptions optionsByDefault];
-    NSString *path = [[NSBundle mainBundle] pathForResource:@"music.mp3" ofType:nil];
-    self.player = [[IJKFFMoviePlayerController alloc] initWithContentURL:[NSURL URLWithString:path] withOptions:options];
+    self.player = [[IJKFFMoviePlayerController alloc] initWithContentURLString:self.url withOptions:options];
     self.player.shouldAutoplay = YES;
     UIView *playerView = [self.player view];
     
@@ -77,33 +64,25 @@
     [playerBackView insertSubview:playerView atIndex:1];
     [self.player setScalingMode:IJKMPMovieScalingModeAspectFit];
     
-    self.mediaControl = [[RJMediaPlayerControl alloc] initWithFrame:frame];
+    self.mediaControl = [[RJMediaPlayerControl alloc] initWithFrame:frame isLiveShow:YES];
     self.mediaControl.delegatePlayer = self.player;
     self.mediaControl.delegate = self;
     self.mediaControl.isOffline = self.isOffline;
     self.mediaControl.vedioTitle = self.videoTitle;
     
     [self.mediaControl startActivity];
-    
     [self.view addSubview:playerBackView];
     [self.view addSubview:self.mediaControl];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
-    if (!isFromExercise) {
-        [self.mediaControl showAndFade];
-    } else {
-        isFromExercise = NO;
-    }
+    [self.mediaControl showAndFade];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
-    
-    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent];
-    
     [super viewWillAppear:animated];
-    
+    [[UIApplication sharedApplication] setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
     [self installMovieNotificationObservers];
     if (![self.player isPreparedToPlay]) {
         [self.player prepareToPlay];
@@ -112,7 +91,6 @@
 
 - (void)viewWillDisappear:(BOOL)animated {
     [super viewWillDisappear:animated];
-    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleDefault];
     
 }
 
@@ -120,81 +98,15 @@
     [super viewDidDisappear:animated];
     [self removeMovieNotificationObservers];
 }
- 
 
-//
-//#pragma mark - alert
-//- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex{
-//    if (alertView.tag == ALERT_TAG) {
-//        [self popViewController];
-//    } else if (alertView.tag == ALERT_WWAN_TAG) {
-//        if (buttonIndex == 1) {
-//            [self continueToPlay:YES];
-//        }
-//    } else if (alertView.tag == ALERT_SETTING) {
-//        if (buttonIndex == 1) {
-//            if (![[AppFun sharedInstance] isConnectNetwork]) {
-//                NSURL *url = [NSURL URLWithString:@"prefs:root=WIFI"];
-//                if (Target_iOS10) {
-//                    url = [NSURL URLWithString:UIApplicationOpenSettingsURLString];
-//                }
-//                //                NSURL *url = [NSURL URLWithString:@"prefs:root=WIFI"];
-//                if ([[UIApplication sharedApplication] canOpenURL:url]) {
-//                    if (Target_iOS10) {
-//                        [[UIApplication sharedApplication]openURL:url options:[NSMutableDictionary dictionary] completionHandler:^(BOOL success) {
-//                            
-//                        }];
-//                    }else
-//                    {
-//                        [[UIApplication sharedApplication] openURL:url];
-//                    }
-//                    
-//                }
-//            }
-//        } else {
-//            [self popViewController];
-//        }
-//    }  else{
-//        if (!appDelegate().isLoginApp) {
-//            return;
-//        }
-//        if (buttonIndex==0) {
-//            isFromExercise = YES;
-//            //  [playBtn setBackgroundImage:[UIImage imageNamed:@"fj_play_pausebtn"] forState:UIControlStateNormal];
-//            if (![[AppFun sharedInstance] isConnectNetwork]) {
-//                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"要开始做题请连接网络!" delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil, nil];
-//                [alert show];
-//                
-//                return;
-//            }
-//            [[ASCourseService sharedInstance] fetchCoursewareMiddleExciseByTextId:(int)paperId andType:self.type completionBlock:^(ASResultCode resultCode, id resultObject) {
-//                if (resultCode==CODE_RESULT_OK) {
-//                    //             NSLog(@"result is hsw hsw %@",resultObject);
-//                    if (resultObject) {
-//                        MidExerciseViewController *vc = [[MidExerciseViewController alloc] init];
-//                        UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
-//                        vc.dataArray = resultObject;
-//                        vc.isTop = self.isSkip;
-//                        [self presentViewController:nav animated:YES completion:nil];
-//                    }
-//                }
-//            }];
-//        }else{
-//            isFromExercise = NO; /*20151111，表明直接点击跳过，未到达做题页面*/
-//            [self continueToPlay:YES];
-//        }
-//    }
-//}
 
 
 #pragma mark - 控制旋转
-- (BOOL)shouldAutorotate
-{
-    return  YES;
+- (BOOL)shouldAutorotate {
+    return YES;
 }
 
-- (UIInterfaceOrientationMask)supportedInterfaceOrientations
-{
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations {
     return UIInterfaceOrientationMaskLandscape;
 }
 
@@ -203,18 +115,6 @@
         [self continueToPlay:isStart];
     } else {
         [self continueToPlay:isStart];
-//        if ([[AppFun sharedInstance] isConnectNetwork]) {
-//            if ([[AppFun sharedInstance] isWIFI]) {
-//                [self continueToPlay:isStart];
-//            } else {
-//                UIAlertView *alert = [[UIAlertView alloc] initWithTitle:@"提示" message:@"当前处于移动网络,继续播放会消耗您的移动流量" delegate:self cancelButtonTitle:@"取消播放" otherButtonTitles:@"继续播放", nil];
-//                // alert.transform = CGAffineTransformRotate(alert.transform, mDegreesToRadian(90));
-//                alert.tag = ALERT_WWAN_TAG;
-//                [alert show];
-//            }
-//        } else {
-//            [[ASUtils sharedInstance] showTextWithDelayHud:self.view message:@"网络连接异常,请检查网络配置"];
-//        }
     }
 }
 
@@ -235,15 +135,7 @@
             if (self.isOffline) {// 离线播放
                 [self continueToPlay:YES];
             } else {
-//                if ([[AppFun sharedInstance] isConnectNetwork]) {
-//                    if ((![[AppFun sharedInstance] isWIFI]) && (!canPlay)) {
-//                    } else {
-//                        if (!self.isOffline) {// 在WIFI或者流量开关打开的状态播放
-//                            [self continueToPlay:YES];
-//                            [[ProgressManager sharedInstance] becomeActivitySet:self.coursewareId];
-//                        }
-//                    }
-//                }
+                [self continueToPlay:YES];
             }
         }
     } else {
@@ -269,12 +161,10 @@
         [self.player pause];
     }
     [UIApplication sharedApplication].idleTimerDisabled = NO;
-    
-    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
-    
     [NSObject cancelPreviousPerformRequestsWithTarget:self];
     [self.mediaControl cancelRefresh];
     self.mediaControl = nil;
+    [[UIApplication sharedApplication] setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
     [self dismissViewControllerAnimated:YES completion:^{
         [self.player shutdown];
         [self.player.view removeFromSuperview];
@@ -316,16 +206,13 @@
     switch (reason)
     {
         case IJKMPMovieFinishReasonPlaybackEnded:{
-            //      NSLog(@"playbackStateDidChange: IJKMPMovieFinishReasonPlaybackEnded: %d\n", reason);
-//            if (self.delegate && [self.delegate respondsToSelector:@selector(didFinishPlay:videoPath:)]) {
-//                [self.delegate didFinishPlay:self.file videoPath:self.url.path];
-//            }
+            NSLog(@"playbackStateDidChange: IJKMPMovieFinishReasonPlaybackEnded: %d\n", reason);
             [self popViewController];
         }
             break;
             
         case IJKMPMovieFinishReasonUserExited:
-            //      NSLog(@"playbackStateDidChange: IJKMPMovieFinishReasonUserExited: %d\n", reason);
+            NSLog(@"playbackStateDidChange: IJKMPMovieFinishReasonUserExited: %d\n", reason);
             break;
             
         case IJKMPMovieFinishReasonPlaybackError: {
@@ -356,41 +243,36 @@
     }
 }
 
-- (void)mediaIsPreparedToPlayDidChange:(NSNotification*)notification
-{
-    //  NSLog(@"mediaIsPreparedToPlayDidChange\n");
+- (void)mediaIsPreparedToPlayDidChange:(NSNotification*)notification {
     // 准备好去播放
     [self playerPreparedToPlay];
 }
 
-- (void)moviePlayBackStateDidChange:(NSNotification*)notification
-{
-    
-    switch (_player.playbackState)
-    {
+- (void)moviePlayBackStateDidChange:(NSNotification*)notification {
+    switch (_player.playbackState) {
         case IJKMPMoviePlaybackStateStopped: {
-            //       NSLog(@"IJKMPMoviePlayBackStateDidChange %d: stoped", (int)_player.playbackState);
+           NSLog(@"IJKMPMoviePlayBackStateDidChange %d: stoped", (int)_player.playbackState);
             break;
         }
         case IJKMPMoviePlaybackStatePlaying: {// 开始播放之后更新时间进度
-            //        NSLog(@"IJKMPMoviePlayBackStateDidChange %d: playing", (int)_player.playbackState);
+            NSLog(@"IJKMPMoviePlayBackStateDidChange %d: playing", (int)_player.playbackState);
             break;
         }
         case IJKMPMoviePlaybackStatePaused: {
-            //      NSLog(@"IJKMPMoviePlayBackStateDidChange %d: paused", (int)_player.playbackState);
+            NSLog(@"IJKMPMoviePlayBackStateDidChange %d: paused", (int)_player.playbackState);
             break;
         }
         case IJKMPMoviePlaybackStateInterrupted: {
-            //     NSLog(@"IJKMPMoviePlayBackStateDidChange %d: interrupted", (int)_player.playbackState);
+            NSLog(@"IJKMPMoviePlayBackStateDidChange %d: interrupted", (int)_player.playbackState);
             break;
         }
         case IJKMPMoviePlaybackStateSeekingForward:
         case IJKMPMoviePlaybackStateSeekingBackward: {
-            //      NSLog(@"IJKMPMoviePlayBackStateDidChange %d: seeking", (int)_player.playbackState);
+            NSLog(@"IJKMPMoviePlayBackStateDidChange %d: seeking", (int)_player.playbackState);
             break;
         }
         default: {
-            //     NSLog(@"IJKMPMoviePlayBackStateDidChange %d: unknown", (int)_player.playbackState);
+            NSLog(@"IJKMPMoviePlayBackStateDidChange %d: unknown", (int)_player.playbackState);
             break;
         }
     }

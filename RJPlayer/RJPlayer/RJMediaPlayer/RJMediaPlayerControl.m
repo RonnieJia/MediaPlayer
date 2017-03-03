@@ -43,9 +43,10 @@ typedef enum : NSInteger {
 @end
 
 @implementation RJMediaPlayerControl
-- (instancetype)initWithFrame:(CGRect)frame {
+- (instancetype)initWithFrame:(CGRect)frame isLiveShow:(BOOL)live {
     self = [super initWithFrame:frame];
     if (self) {
+        self.isLiveShow = live;
         [self setup];
     }
     return self;
@@ -151,11 +152,11 @@ typedef enum : NSInteger {
             case kCameraMoveDirectionRight:// 快进
             case kCameraMoveDirectionLeft: {
                 isVedioSliderBeginDragged = YES;
-                
-                CGFloat forwardSeconds = translation.x/self.frame.size.width * 30.0f;
-                NSTimeInterval curPlayTime = self.delegatePlayer.currentPlaybackTime;
-                [forwardView showTime:curPlayTime + forwardSeconds totalDuration:self.delegatePlayer.duration];
-                
+                if (!self.isLiveShow) {
+                    CGFloat forwardSeconds = translation.x/self.frame.size.width * 30.0f;
+                    NSTimeInterval curPlayTime = self.delegatePlayer.currentPlaybackTime;
+                    [forwardView showTime:curPlayTime + forwardSeconds totalDuration:self.delegatePlayer.duration];
+                }
             }
                 break ;
             default :
@@ -165,12 +166,14 @@ typedef enum : NSInteger {
         [[LightView sharedInstance] autoHiden];
         // now tell the camera to stop
         if (isVedioSliderBeginDragged) {
-            isVedioSliderBeginDragged = NO;
-            CGFloat forwardSeconds = translation.x/self.frame.size.width * 30.0f;// 快进时间
-            vedioProgressSlider.value += forwardSeconds;
-            self.delegatePlayer.currentPlaybackTime = vedioProgressSlider.value;
-            forwardView.hidden = YES;
-            [self refreshVedioControl];
+            if (!self.isLiveShow) {
+                isVedioSliderBeginDragged = NO;
+                CGFloat forwardSeconds = translation.x/self.frame.size.width * 30.0f;// 快进时间
+                vedioProgressSlider.value += forwardSeconds;
+                self.delegatePlayer.currentPlaybackTime = vedioProgressSlider.value;
+                forwardView.hidden = YES;
+                [self refreshVedioControl];
+            }
         }
     }
 }
@@ -210,21 +213,19 @@ typedef enum : NSInteger {
 
 /** navigationControl */
 - (void)setupTopPanel {
-    self.topPanel = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 64)];
+    self.topPanel = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.frame.size.width, 44)];
     self.topPanel.userInteractionEnabled = YES;
-    self.topPanel.image = [UIImage imageNamed:@"fj_play_navbg"];
+    self.topPanel.backgroundColor = [[UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:1.0] colorWithAlphaComponent:0.6];
     [self.overlayPanel addSubview:self.topPanel];
     
     backBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    backBtn.frame = CGRectMake(0, 24, 80, 35);
-    [backBtn setImage:[UIImage imageNamed:@"fj_back"] forState:UIControlStateNormal];
-    [backBtn setTitle:@"返回" forState:UIControlStateNormal];
-    backBtn.titleLabel.font = [UIFont boldSystemFontOfSize:16];
+    backBtn.frame = CGRectMake(20, 2, 40, 40);
+    [backBtn setImage:[UIImage imageNamed:@"back_white"] forState:UIControlStateNormal];
     [backBtn setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [backBtn addTarget:self action:@selector(back:) forControlEvents:UIControlEventTouchUpInside];
     [self.topPanel addSubview:backBtn];
     
-    vedioTitleLabel = [UILabel labelWithFrame:CGRectMake(90, 20, self.frame.size.width - 180, 44) textColor:[UIColor whiteColor] font:[UIFont systemFontOfSize:16] textAlignment:NSTextAlignmentCenter text:self.vedioTitle];
+    vedioTitleLabel = [UILabel labelWithFrame:CGRectMake(90, 0, self.frame.size.width - 180, 44) textColor:[UIColor whiteColor] font:[UIFont systemFontOfSize:16] textAlignment:NSTextAlignmentCenter text:self.vedioTitle];
     [self.topPanel addSubview:vedioTitleLabel];
     
 }
@@ -237,62 +238,76 @@ typedef enum : NSInteger {
 
 /** 下部的控制视图 */
 - (void)setupBottomPanel {
+    if (self.isLiveShow) {
+        self.bottomPanel = [[UIImageView alloc] initWithFrame:CGRectMake(0, self.frame.size.height-50, self.frame.size.width, 50)];
+        self.bottomPanel.backgroundColor = [[UIColor colorWithRed:0.1 green:0.1 blue:0.1 alpha:1.0] colorWithAlphaComponent:0.6];
+    } else {
     self.bottomPanel = [[UIImageView alloc] initWithFrame:CGRectMake(0, self.frame.size.height-80, self.frame.size.width, 80)];
-    self.bottomPanel.userInteractionEnabled = YES;
     self.bottomPanel.image = [UIImage imageNamed:@"fj_play_bottombg"];
+    }
     [self.overlayPanel addSubview:self.bottomPanel];
-    [self.bottomPanel addGestureRecognizer:[[UITapGestureRecognizer alloc] init]];
+    [self.bottomPanel addGestureRecognizer:[UITapGestureRecognizer new]];
+    self.bottomPanel.userInteractionEnabled = YES;
+
+    CGFloat top = 0;
+    if (!self.isLiveShow) {
+        cacheProgressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
+        cacheProgressView.frame = CGRectMake(12, 14.6, self.frame.size.width-22, 1.0);
+        cacheProgressView.transform = CGAffineTransformMakeScale(1.0, 0.8);
+        cacheProgressView.trackTintColor = [UIColor blackColor];//[UIColor colorWithRed:87/255.0f green:89/255.0f blue:90/255.0f alpha:1.0f];
+        cacheProgressView.progressTintColor = [UIColor colorWithRed:57/255.0f green:57/255.0f blue:57/255.0f alpha:1.0f];
+        [self.bottomPanel addSubview:cacheProgressView];
+        
+        vedioProgressSlider = [[UISlider alloc] initWithFrame:CGRectMake(10, 10, self.frame.size.width-20, 10)];
+        vedioProgressSlider.backgroundColor = [UIColor clearColor];
+        [vedioProgressSlider setMinimumTrackImage:[UIImage imageNamed:@"fj_play_progress_min"] forState:UIControlStateNormal];
+        [vedioProgressSlider setMaximumTrackImage:[UIImage imageNamed:@"fj_play_null"] forState:UIControlStateNormal];
+        [vedioProgressSlider setThumbImage:[UIImage imageNamed:@"fj_play_progress_thumb"] forState:UIControlStateNormal];
+        [vedioProgressSlider setThumbImage:[UIImage imageNamed:@"fj_play_progress_thumb"] forState:UIControlStateHighlighted];
+        [self.bottomPanel addSubview:vedioProgressSlider];
+        [vedioProgressSlider setValue:0.0];
+        UITapGestureRecognizer *vedioProgressTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vedioProgressSliderTapped:)];
+        [vedioProgressSlider addGestureRecognizer:vedioProgressTap];
+        [vedioProgressSlider addTarget:self action:@selector(changePlayerProgress:) forControlEvents:UIControlEventValueChanged];
+        [vedioProgressSlider addTarget:self action:@selector(progressSliderDownAction:) forControlEvents:UIControlEventTouchDown];
+        [vedioProgressSlider addTarget:self action:@selector(progressSliderUpInSideAction:) forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside];
+        [vedioProgressSlider addTarget:self action:@selector(progressSliderUpCancelAction:) forControlEvents:UIControlEventTouchCancel];
+        top = 30;
+    }
     
-    cacheProgressView = [[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault];
-    cacheProgressView.frame = CGRectMake(12, 14.6, self.frame.size.width-22, 1.0);
-    cacheProgressView.transform = CGAffineTransformMakeScale(1.0, 0.8);
-    cacheProgressView.trackTintColor = [UIColor blackColor];//[UIColor colorWithRed:87/255.0f green:89/255.0f blue:90/255.0f alpha:1.0f];
-    cacheProgressView.progressTintColor = [UIColor colorWithRed:57/255.0f green:57/255.0f blue:57/255.0f alpha:1.0f];
-    [self.bottomPanel addSubview:cacheProgressView];
-    
-    vedioProgressSlider = [[UISlider alloc] initWithFrame:CGRectMake(10, 10, self.frame.size.width-20, 10)];
-    vedioProgressSlider.backgroundColor = [UIColor clearColor];
-    [vedioProgressSlider setMinimumTrackImage:[UIImage imageNamed:@"fj_play_progress_min"] forState:UIControlStateNormal];
-    [vedioProgressSlider setMaximumTrackImage:[UIImage imageNamed:@"fj_play_null"] forState:UIControlStateNormal];
-    [vedioProgressSlider setThumbImage:[UIImage imageNamed:@"fj_play_progress_thumb"] forState:UIControlStateNormal];
-    [vedioProgressSlider setThumbImage:[UIImage imageNamed:@"fj_play_progress_thumb"] forState:UIControlStateHighlighted];
-    [self.bottomPanel addSubview:vedioProgressSlider];
-    [vedioProgressSlider setValue:0.0];
-    UITapGestureRecognizer *vedioProgressTap = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(vedioProgressSliderTapped:)];
-    [vedioProgressSlider addGestureRecognizer:vedioProgressTap];
-    [vedioProgressSlider addTarget:self action:@selector(changePlayerProgress:) forControlEvents:UIControlEventValueChanged];
-    [vedioProgressSlider addTarget:self action:@selector(progressSliderDownAction:) forControlEvents:UIControlEventTouchDown];
-    [vedioProgressSlider addTarget:self action:@selector(progressSliderUpInSideAction:) forControlEvents:UIControlEventTouchUpInside | UIControlEventTouchUpOutside];
-    [vedioProgressSlider addTarget:self action:@selector(progressSliderUpCancelAction:) forControlEvents:UIControlEventTouchCancel];
     
     playBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    playBtn.frame = CGRectMake(30, 30, 50, 50);
+    playBtn.frame = CGRectMake(20, top, 50, 50);
     [playBtn setBackgroundImage:[UIImage imageNamed:@"fj_play_playbtn"] forState:UIControlStateNormal];
     [playBtn setBackgroundImage:[UIImage imageNamed:@"fj_play_pausebtn"] forState:UIControlStateSelected];
     [playBtn addTarget:self action:@selector(play:) forControlEvents:UIControlEventTouchUpInside];
     [self.bottomPanel addSubview:playBtn];
     
-    currentPlayTime = [UILabel labelWithFrame:CGRectMake(100, 34, 53, 40) textColor:[UIColor whiteColor] font:[UIFont systemFontOfSize:13] textAlignment:NSTextAlignmentCenter text:@"--:--:--"];
+    currentPlayTime = [UILabel labelWithFrame:CGRectMake(100, top + 5, 53, 40) textColor:[UIColor whiteColor] font:[UIFont systemFontOfSize:13] textAlignment:NSTextAlignmentCenter text:@"--:--:--"];
     currentPlayTime.backgroundColor = [UIColor clearColor];
     currentPlayTime.adjustsFontSizeToFitWidth = YES;
     [self.bottomPanel addSubview:currentPlayTime];
     
-    UIView *tmpLine = [[UIView alloc] initWithFrame:CGRectMake(156, 47, 1, 13)];
+    UIView *tmpLine = [[UIView alloc] initWithFrame:CGRectMake(156, top + 17, 1, 13)];
     tmpLine.backgroundColor = [UIColor grayColor];
     [self.bottomPanel addSubview:tmpLine];
     
-    totalPlayTime = [UILabel labelWithFrame:CGRectMake(160, 34, 53, 40) textColor:[UIColor lightGrayColor] font:[UIFont systemFontOfSize:13] textAlignment:NSTextAlignmentCenter text:@"--:--:--"];
+    totalPlayTime = [UILabel labelWithFrame:CGRectMake(160, top + 5, 53, 40) textColor:[UIColor lightGrayColor] font:[UIFont systemFontOfSize:13] textAlignment:NSTextAlignmentCenter text:@"--:--:--"];
     totalPlayTime.adjustsFontSizeToFitWidth = YES;
     [self.bottomPanel addSubview:totalPlayTime];
+    if (self.isLiveShow) {
+        tmpLine.hidden = YES;
+        totalPlayTime.hidden = YES;
+    }
     
     volumeBtn = [UIButton buttonWithType:UIButtonTypeCustom];
-    volumeBtn.frame = CGRectMake(self.frame.size.width - 200, 38, 30, 30);
+    volumeBtn.frame = CGRectMake(self.frame.size.width - 200, top + 10, 30, 30);
     [volumeBtn setImage:[UIImage imageNamed:@"fj_play_volume"] forState:UIControlStateNormal];
     [volumeBtn setImage:[UIImage imageNamed:@"fj_play_volume_none"] forState:UIControlStateSelected];
     [volumeBtn addTarget:self action:@selector(clickVolumeBtn:) forControlEvents:UIControlEventTouchUpInside];
     [self.bottomPanel addSubview:volumeBtn];
     
-    volumeSlider = [[UISlider alloc] initWithFrame:CGRectMake(self.frame.size.width - 180, 37, 160, 30)];
+    volumeSlider = [[UISlider alloc] initWithFrame:CGRectMake(self.frame.size.width - 180, top + 10, 160, 30)];
     [volumeSlider setMinimumTrackTintColor:[UIColor orangeColor]];
     [volumeSlider setMaximumTrackTintColor:[UIColor colorWithRed:20/255.0 green:20/255.0 blue:20/255.0 alpha:0.7]];
     [volumeSlider setValue:[MPMusicPlayerController applicationMusicPlayer].volume];

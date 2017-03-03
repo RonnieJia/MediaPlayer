@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+	<dict>
+		<key>title</key>
+		<string>CCTV-5</string>
+		<key>url</key>
+		<string>http://www.anchoredinversion.com/tv/ds/wasu10.php?id=cctv5hd</string>
+		<key>icon</key>
+		<string></string>
+		<key>desc</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>title</key>
+		<string>美国航天局NASA</string>
+		<key>url</key>
+		<string>http://nasatv-lh.akamaihd.net/i/NASA_101@319270/index_1000_av-p.m3u8</string>
+		<key>icon</key>
+		<string></string>
+		<key>desc</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>title</key>
+		<string>超清MV</string>
+		<key>url</key>
+		<string>http://dlhls.cdn.zhanqi.tv/zqlive/19969_TnDT2.m3u8</string>
+		<key>icon</key>
+		<string></string>
+		<key>desc</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>title</key>
+		<string>战旗电影</string>
+		<key>url</key>
+		<string>http://dlhls.cdn.zhanqi.tv/zqlive/284_zMohT.m3u8</string>
+		<key>icon</key>
+		<string></string>
+		<key>desc</key>
+		<string></string>
+	</dict>
+	<dict>
+		<key>title</key>
+		<string>韩国电影</string>
+		<key>url</key>
+		<string>http://123.108.164.110/etv1sb/pld10928/playlist.m3u8</string>
+		<key>icon</key>
+		<string></string>
+		<key>desc</key>
+		<string></string>
+	</dict>
+</array>
+</plist>

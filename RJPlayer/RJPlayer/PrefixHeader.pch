@@ -17,6 +17,7 @@
 #import "UILabel+Custom.h"
 
 #endif
+#import "RJFunctions.h"
 
 #define KNOTI_NETWORKSTATECHANGE @"RJPlayer_NetworkStateChange_Noti"
 

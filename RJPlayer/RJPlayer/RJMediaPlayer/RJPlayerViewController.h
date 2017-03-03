@@ -13,7 +13,7 @@
 @end
 
 @interface RJPlayerViewController : UIViewController
-@property(atomic,strong) NSURL *url;
+@property(atomic,strong) NSString *url;
 @property (nonatomic, assign) id<RJMediaPlayerDelegate> delegate;
 @property(atomic, retain) id<IJKMediaPlayback> player;
 @property(nonatomic,strong) RJMediaPlayerControl *mediaControl;// 播放时的工具条
@@ -23,6 +23,5 @@
 @property (nonatomic , assign) BOOL isOffline;
 @property (nonatomic , assign) BOOL isError;
 
-- (id)initWithURL:(NSURL *)url;
-
+- (id)initWithURL:(NSString *)url;
 @end

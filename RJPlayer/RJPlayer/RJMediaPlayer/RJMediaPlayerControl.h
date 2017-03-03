@@ -13,9 +13,11 @@
 
 @property(nonatomic,weak) id<IJKMediaPlayback> delegatePlayer;
 @property (nonatomic, assign) id<RJMediaControlDelegate> delegate;
-
+@property (nonatomic, assign)BOOL isLiveShow;
 @property (nonatomic, strong) NSString *vedioTitle;// 视频名称
 @property (nonatomic, assign) BOOL isOffline; // 是否离线视频
+
+- (instancetype)initWithFrame:(CGRect)frame isLiveShow:(BOOL)live;
 
 /**  刷新播放进度，以及缓冲进度等 */
 - (void)refreshVedioControl;
